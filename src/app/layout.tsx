@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import {ClerkProvider} from '@clerk/nextjs'
-import { User } from "lucide-react";
-import UserSync from "@/components/UserSync"
+
+import { ClerkProvider } from "@clerk/nextjs";
+import TanstackProvider from "@/providers/TanstackProvider";
+import UserSync from "@/components/UserSync";
+import { ThemeProvider } from "@/providers/ThemeProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,24 +28,26 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider 
-        afterSignInUrl="/dashboard"
-        afterSignUpUrl="/dashboard"
-       appearance={{
-        variables: {
-          colorText: '#6b46c1', // Dark purple color
-          colorTextSecondary: '#8b5cf6', // Lighter purple for secondary text
-        },
-      }}
-  >
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <UserSync/>
-        {children}
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <ClerkProvider
+          afterSignInUrl="/dashboard"
+          afterSignUpUrl="/dashboard"
+          appearance={{
+            variables: {
+              colorText: "#6b46c1",
+              colorTextSecondary: "#8b5cf6",
+            },
+          }}
+        >
+          <ThemeProvider>
+          <TanstackProvider>
+            <UserSync />
+            {children}
+          </TanstackProvider>
+        </ThemeProvider>
+        </ClerkProvider>
       </body>
     </html>
-    </ClerkProvider>
   );
 }

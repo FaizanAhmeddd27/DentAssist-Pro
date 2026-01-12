@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import {
   SignInButton,
@@ -10,6 +10,7 @@ import {
   UserButton,
 } from "@clerk/nextjs";
 import { Moon, Sun, Monitor } from "lucide-react";
+import { useTheme } from "@/providers/ThemeProvider";
 
 const navLinks = [
   { name: "How It Works", href: "#how-it-works" },
@@ -17,69 +18,14 @@ const navLinks = [
   { name: "About", href: "#about" },
 ];
 
-type ThemeMode = "system" | "dark" | "light";
-
-const Header: React.FC = () => {
+export default function Header() {
   const [open, setOpen] = useState(false);
-  const [mode, setMode] = useState<ThemeMode>("system");
-
-  useEffect(() => {
-    const stored =
-      typeof window !== "undefined" ? localStorage.getItem("theme-mode") : null;
-    if (stored === "dark" || stored === "light" || stored === "system") {
-      setMode(stored as ThemeMode);
-    }
-  }, []);
-
-  useEffect(() => {
-    const apply = (m: ThemeMode) => {
-      const root = document.documentElement;
-
-      const setDark = (on: boolean) => {
-        if (on) root.classList.add("dark");
-        else root.classList.remove("dark");
-      };
-
-      if (m === "dark") setDark(true);
-      else if (m === "light") setDark(false);
-      else {
-        const prefersDark =
-          window.matchMedia &&
-          window.matchMedia("(prefers-color-scheme: dark)").matches;
-        setDark(prefersDark);
-      }
-    };
-
-    apply(mode);
-    localStorage.setItem("theme-mode", mode);
-
-    if (mode === "system") {
-      const mq = window.matchMedia("(prefers-color-scheme: dark)");
-      const listener = () => apply("system");
-
-      if (mq.addEventListener) mq.addEventListener("change", listener);
-      else mq.addListener(listener as any);
-
-      return () => {
-        if (mq.removeEventListener) mq.removeEventListener("change", listener);
-        else mq.removeListener(listener as any);
-      };
-    }
-  }, [mode]);
-
-  const cycleMode = () => {
-    setMode((m) => (m === "system" ? "dark" : m === "dark" ? "light" : "system"));
-  };
+  const { theme, cycleTheme } = useTheme();
 
   const getThemeIcon = () => {
-    switch (mode) {
-      case "system":
-        return <Monitor className="w-4 h-4" />;
-      case "dark":
-        return <Moon className="w-4 h-4" />;
-      case "light":
-        return <Sun className="w-4 h-4" />;
-    }
+    if (theme === "system") return <Monitor className="w-4 h-4" />;
+    if (theme === "dark") return <Moon className="w-4 h-4" />;
+    return <Sun className="w-4 h-4" />;
   };
 
   const handleNavClick = (
@@ -94,7 +40,10 @@ const Header: React.FC = () => {
       if (element) {
         const headerOffset = 80;
         const y =
-          element.getBoundingClientRect().top + window.pageYOffset - headerOffset;
+          element.getBoundingClientRect().top +
+          window.pageYOffset -
+          headerOffset;
+
         window.scrollTo({ top: y, behavior: "smooth" });
       }
 
@@ -130,25 +79,22 @@ const Header: React.FC = () => {
               </a>
             ))}
 
-            {/* Dashboard: Signed in -> link, Signed out -> sign-in modal then go dashboard */}
+            {/* Dashboard */}
             <SignedIn>
               <Link
                 href="/dashboard"
                 className="relative text-muted-foreground hover:text-foreground transition-colors font-medium group py-2"
               >
                 Dashboard
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full" />
+                <span className="absolute bottom-0 left-1/2 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full group-hover:left-0" />
               </Link>
             </SignedIn>
 
             <SignedOut>
-              <SignInButton
-                mode="modal"
-              
-              >
+              <SignInButton mode="modal">
                 <button className="relative text-muted-foreground hover:text-foreground transition-colors font-medium group py-2">
                   Dashboard
-                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full" />
+                  <span className="absolute bottom-0 left-1/2 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full group-hover:left-0" />
                 </button>
               </SignInButton>
             </SignedOut>
@@ -158,8 +104,8 @@ const Header: React.FC = () => {
           <div className="flex items-center gap-3">
             {/* Theme toggle */}
             <button
-              onClick={cycleMode}
-              title={`Current theme: ${mode}. Click to cycle.`}
+              onClick={cycleTheme}
+              title={`Current theme: ${theme}. Click to cycle.`}
               className="p-2 rounded-md border border-border bg-card text-card-foreground hover:bg-accent hover:text-accent-foreground hover:scale-110 transition-all duration-300"
             >
               {getThemeIcon()}
@@ -168,19 +114,13 @@ const Header: React.FC = () => {
             {/* Auth (desktop) */}
             <div className="hidden sm:flex items-center gap-2">
               <SignedOut>
-                <SignInButton
-                  mode="modal"
-                
-                >
+                <SignInButton mode="modal">
                   <button className="px-4 py-2 rounded-md bg-transparent border border-border text-foreground hover:bg-accent transition-all duration-300">
                     Login
                   </button>
                 </SignInButton>
 
-                <SignUpButton
-                  mode="modal"
-                 
-                >
+                <SignUpButton mode="modal">
                   <button className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-300 font-medium">
                     Sign up
                   </button>
@@ -199,37 +139,35 @@ const Header: React.FC = () => {
             </div>
 
             {/* Mobile menu toggle */}
-            <div className="md:hidden">
-              <button
-                onClick={() => setOpen((v) => !v)}
-                aria-label="Toggle menu"
-                className="p-2 rounded-md border border-border hover:bg-accent transition-all duration-300"
+            <button
+              onClick={() => setOpen((v) => !v)}
+              aria-label="Toggle menu"
+              className="md:hidden p-2 rounded-md border border-border hover:bg-accent transition-all duration-300"
+            >
+              <svg
+                className="w-5 h-5 transition-transform duration-300"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                style={{ transform: open ? "rotate(90deg)" : "rotate(0deg)" }}
               >
-                <svg
-                  className="w-5 h-5 transition-transform duration-300"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  style={{ transform: open ? "rotate(90deg)" : "rotate(0deg)" }}
-                >
-                  {open ? (
-                    <path
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  ) : (
-                    <path
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M4 6h16M4 12h16M4 18h16"
-                    />
-                  )}
-                </svg>
-              </button>
-            </div>
+                {open ? (
+                  <path
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                ) : (
+                  <path
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
+                )}
+              </svg>
+            </button>
           </div>
         </div>
       </div>
@@ -261,10 +199,7 @@ const Header: React.FC = () => {
             </SignedIn>
 
             <SignedOut>
-              <SignInButton
-                mode="modal"
-              
-              >
+              <SignInButton mode="modal">
                 <button
                   onClick={() => setOpen(false)}
                   className="w-full text-left text-foreground hover:text-primary hover:translate-x-2 py-2 transition-all duration-300 font-medium"
@@ -277,32 +212,21 @@ const Header: React.FC = () => {
             {/* Auth buttons (mobile) */}
             <div className="flex items-center gap-2 pt-2">
               <SignedOut>
-                <SignInButton
-                  mode="modal"
-                 
-                >
-                  <button className="w-full px-3 py-2 rounded-md border border-border hover:bg-accent hover:shadow-md transition-all duration-300">
+                <SignInButton mode="modal">
+                  <button className="w-full px-3 py-2 rounded-md border border-border hover:bg-accent transition-all duration-300">
                     Login
                   </button>
                 </SignInButton>
 
-                <SignUpButton
-                  mode="modal"
-                >
-                  <button className="w-full px-3 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-lg transition-all duration-300 font-medium">
+                <SignUpButton mode="modal">
+                  <button className="w-full px-3 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-300 font-medium">
                     Sign up
                   </button>
                 </SignUpButton>
               </SignedOut>
 
               <SignedIn>
-                <UserButton
-                  appearance={{
-                    elements: {
-                      avatarBox: "w-9 h-9",
-                    },
-                  }}
-                />
+                <UserButton />
               </SignedIn>
             </div>
           </div>
@@ -310,6 +234,4 @@ const Header: React.FC = () => {
       )}
     </header>
   );
-};
-
-export default Header;
+}
