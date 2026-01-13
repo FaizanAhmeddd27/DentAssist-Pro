@@ -3,26 +3,24 @@ import prisma from "@/lib/prisma";
 
 export async function GET() {
   try {
-   const doctors = await prisma.doctor.findMany({
+    const doctors = await prisma.doctor.findMany({
       include: {
         _count: { select: { appointments: true } },
       },
       orderBy: { createdAt: "desc" },
     });
 
-    const data = doctors.map((doctor) => ({
-      ...doctor,
-      appointmentCount: doctor._count.appointments,
-    }));
-
-    return NextResponse.json(data, { status: 200 });
-  } catch (error) {
-    console.error("Error fetching doctors:", error);
+    return NextResponse.json(
+      doctors.map(d => ({
+        ...d,
+        appointmentCount: d._count.appointments,
+      }))
+    );
+  } catch (err) {
+    console.error(err);
     return NextResponse.json([], { status: 200 });
   }
 }
-
-
 
 export async function POST(req: Request) {
   try {
@@ -34,16 +32,16 @@ export async function POST(req: Request) {
         email: body.email,
         phoneNumber: body.phoneNumber,
         specialty: body.specialty,
-        gender: body.gender, // MALE | FEMALE
+        gender: body.gender,
         isActive: true,
       },
     });
 
     return NextResponse.json(doctor, { status: 201 });
-  } catch (error) {
-    console.error(error);
+  } catch (err) {
+    console.error(err);
     return NextResponse.json(
-      { error: "Failed to create doctor" },
+      { error: "Doctor with this email already exists" },
       { status: 500 }
     );
   }

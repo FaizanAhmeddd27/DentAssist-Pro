@@ -13,22 +13,22 @@ type ThemeContextValue = {
 const ThemeContext = React.createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = React.useState<Theme>("system");
+  const [theme, setTheme] = React.useState<Theme>(() => {
+    if (typeof window !== "undefined") {
+      return (localStorage.getItem("theme-mode") as Theme) || "system";
+    }
+    return "system";
+  });
 
-  // Load saved theme once
-  React.useEffect(() => {
-    const saved = localStorage.getItem("theme-mode") as Theme | null;
-    if (saved) setTheme(saved);
-  }, []);
-
-  // Apply theme globally
   React.useEffect(() => {
     const root = document.documentElement;
 
     const apply = (t: Theme) => {
-      if (t === "dark") root.classList.add("dark");
-      else if (t === "light") root.classList.remove("dark");
-      else {
+      if (t === "dark") {
+        root.classList.add("dark");
+      } else if (t === "light") {
+        root.classList.remove("dark");
+      } else {
         const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
         root.classList.toggle("dark", prefersDark);
       }

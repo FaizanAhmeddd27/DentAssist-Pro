@@ -1,75 +1,76 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 
 export function useGetDoctors() {
   return useQuery({
     queryKey: ["doctors"],
     queryFn: async () => {
       const res = await fetch("/api/doctors", { cache: "no-store" });
-      if (!res.ok) throw new Error("Failed to fetch doctors");
+      if (!res.ok) throw new Error("Fetch failed");
       return res.json();
     },
-    initialData: [],
   });
 }
 
 export function useCreateDoctor() {
-  const queryClient = useQueryClient();
+  const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: async (payload: any) => {
+    mutationFn: async (data: any) => {
       const res = await fetch("/api/doctors", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(data),
       });
-
-      if (!res.ok) throw new Error("Failed to create doctor");
+      if (!res.ok) throw new Error();
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["doctors"] });
+      toast.success("Doctor added");
+      qc.invalidateQueries({ queryKey: ["doctors"] });
     },
+    onError: () => toast.error("Email already exists"),
   });
 }
 
 export function useUpdateDoctor() {
-  const queryClient = useQueryClient();
+  const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: async (payload: { id: string; [key: string]: any }) => {
-      const { id, ...data } = payload;
+    mutationFn: async ({ id, ...data }: any) => {
       const res = await fetch(`/api/doctors/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-
-      if (!res.ok) throw new Error("Failed to update doctor");
+      if (!res.ok) throw new Error();
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["doctors"] });
+      toast.success("Doctor updated");
+      qc.invalidateQueries({ queryKey: ["doctors"] });
     },
+    onError: () => toast.error("Update failed"),
   });
 }
 
 export function useDeleteDoctor() {
-  const queryClient = useQueryClient();
+  const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: async (doctorId: string) => {
-      const res = await fetch(`/api/doctors/${doctorId}`, {
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/doctors/${id}`, {
         method: "DELETE",
       });
-
-      if (!res.ok) throw new Error("Failed to delete doctor");
+      if (!res.ok) throw new Error();
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["doctors"] });
+      toast.success("Doctor deactivated");
+      qc.invalidateQueries({ queryKey: ["doctors"] });
     },
+    onError: () => toast.error("Delete failed"),
   });
 }

@@ -2,77 +2,60 @@
 import { Button } from "@/components/ui/button";
 import { SignUpButton } from "@clerk/nextjs";
 import { CheckCircle2, Sparkles, Crown, Zap, Star } from "lucide-react";
-import { useState } from "react";
 
 function PricingSection() {
-  const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">("monthly");
-
   const plans = [
     {
-      name: "Starter",
-      description: "Perfect for individuals exploring AI dental care",
-      monthlyPrice: 0,
-      yearlyPrice: 0,
+      name: "Free",
+      description: "Perfect for getting started with dental care",
+      price: 0,
       icon: Sparkles,
       color: "from-blue-500/20 to-blue-500/10",
       borderColor: "border-blue-500/30",
       features: [
-        "5 AI chat conversations per month",
-        "Basic symptom checker",
-        "Appointment booking",
-        "Email support",
-        "Dental care tips",
-        "Treatment cost estimates"
+        "Unlimited appointment booking",
+        "Basic text chat support",
+        "Appointment reminders",
       ],
       popular: false,
-      cta: "Start Free"
+      cta: "Get Started Free"
     },
     {
-      name: "Professional",
-      description: "Comprehensive AI dental assistance",
-      monthlyPrice: 12,
-      yearlyPrice: 120,
+      name: "Basic",
+      description: "Enhanced AI-powered dental assistance",
+      price: 12,
       icon: Crown,
       color: "from-primary/20 to-primary/10",
       borderColor: "border-primary/50",
       features: [
-        "Unlimited AI conversations",
-        "Advanced symptom analysis",
-        "Priority appointment booking",
-        "24/7 live chat support",
-        "Personalized care plans",
-        "X-ray image analysis",
-        "Treatment recommendations",
-        "Dental emergency guidance"
+        "Everything in Free",
+        "10 AI voice calls per month",
+        "AI dental guidance",
+        "Priority support",
       ],
       popular: true,
-      cta: "Get Professional"
+      cta: "Get Basic"
     },
     {
-      name: "Family",
-      description: "Complete care for your entire family",
-      monthlyPrice: 29,
-      yearlyPrice: 290,
+      name: "Premium",
+      description: "Complete AI dental care solution",
+      price: 29,
       icon: Star,
       color: "from-purple-500/20 to-purple-500/10",
       borderColor: "border-purple-500/30",
       features: [
-        "Everything in Professional",
-        "Up to 6 family members",
-        "Kids dental guidance",
-        "Family care dashboard",
-        "Shared appointment calendar",
-        "Orthodontic consultations",
-        "Premium support",
-        "Quarterly dental reports"
+        "Everything in Basic",
+        "Unlimited AI voice calls",
+        "Personalized care plans",
+        "Detailed health reports",
       ],
       popular: false,
-      cta: "Get Family Plan"
+      cta: "Get Premium"
     }
   ];
 
   return (
-    <section id="pricing" className="relative  px-6 overflow-hidden bg-gradient-to-b from-background via-muted/5 to-background">
+    <section id="pricing" className="relative px-6 py-24 overflow-hidden bg-gradient-to-b from-background via-muted/5 to-background">
       <div className="absolute inset-0">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,hsl(var(--primary)/0.05),transparent_70%)]"></div>
         <div className="absolute top-20 left-20 w-96 h-96 bg-primary/5 rounded-full blur-3xl animate-pulse"></div>
@@ -83,7 +66,7 @@ function PricingSection() {
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary/5 to-primary/10 rounded-full border border-primary/10 backdrop-blur-sm mb-6">
             <Zap className="w-4 h-4 text-primary animate-pulse" />
-            <span className="text-sm font-medium text-primary">Flexible Pricing</span>
+            <span className="text-sm font-medium text-primary">Simple Pricing</span>
           </div>
           
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 tracking-tight">
@@ -96,42 +79,15 @@ function PricingSection() {
             </span>
           </h2>
           
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed mb-8">
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
             Get instant AI dental assistance with transparent pricing. 
             No hidden fees, cancel anytime.
           </p>
-
-          <div className="inline-flex items-center gap-3 p-1 bg-muted/50 rounded-xl backdrop-blur-sm">
-            <button
-              onClick={() => setBillingPeriod("monthly")}
-              className={`px-6 py-2 rounded-lg font-medium transition-all duration-300 ${
-                billingPeriod === "monthly"
-                  ? "bg-primary text-primary-foreground shadow-lg"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Monthly
-            </button>
-            <button
-              onClick={() => setBillingPeriod("yearly")}
-              className={`px-6 py-2 rounded-lg font-medium transition-all duration-300 relative ${
-                billingPeriod === "yearly"
-                  ? "bg-primary text-primary-foreground shadow-lg"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Yearly
-              <span className="absolute -top-2 -right-2 bg-green-500 text-white text-xs px-2 py-0.5 rounded-full">
-                Save 17%
-              </span>
-            </button>
-          </div>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
           {plans.map((plan, idx) => {
             const Icon = plan.icon;
-            const price = billingPeriod === "monthly" ? plan.monthlyPrice : plan.yearlyPrice;
             const isPopular = plan.popular;
 
             return (
@@ -159,17 +115,10 @@ function PricingSection() {
                     
                     <div className="flex items-end gap-2">
                       <span className="text-5xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
-                        ${price}
+                        ${plan.price}
                       </span>
-                      <span className="text-muted-foreground mb-2">
-                        /{billingPeriod === "monthly" ? "mo" : "yr"}
-                      </span>
+                      <span className="text-muted-foreground mb-2">/month</span>
                     </div>
-                    {billingPeriod === "yearly" && price > 0 && (
-                      <p className="text-xs text-muted-foreground mt-2">
-                        ${(price / 12).toFixed(2)}/month billed annually
-                      </p>
-                    )}
                   </div>
 
                   <SignUpButton mode="modal">

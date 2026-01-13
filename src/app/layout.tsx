@@ -6,6 +6,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import TanstackProvider from "@/providers/TanstackProvider";
 import UserSync from "@/components/UserSync";
 import { ThemeProvider } from "@/providers/ThemeProvider";
+import { Toaster } from "react-hot-toast";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,7 +29,31 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Blocking script to prevent theme flash */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  const theme = localStorage.getItem('theme-mode') || 'system';
+                  const root = document.documentElement;
+                  
+                  if (theme === 'dark') {
+                    root.classList.add('dark');
+                  } else if (theme === 'light') {
+                    root.classList.remove('dark');
+                  } else {
+                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (prefersDark) root.classList.add('dark');
+                  }
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
+      </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ClerkProvider
           afterSignInUrl="/dashboard"
@@ -41,11 +66,12 @@ export default function RootLayout({
           }}
         >
           <ThemeProvider>
-          <TanstackProvider>
-            <UserSync />
-            {children}
-          </TanstackProvider>
-        </ThemeProvider>
+            <TanstackProvider>
+              <UserSync />
+              <Toaster position="top-right" reverseOrder={false} />
+              {children}
+            </TanstackProvider>
+          </ThemeProvider>
         </ClerkProvider>
       </body>
     </html>

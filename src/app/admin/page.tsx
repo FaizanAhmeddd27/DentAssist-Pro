@@ -1,13 +1,18 @@
-import { currentUser } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import AdminDashboardClient from "./AdminDashboardClient"; // adjust path if different
+import AdminDashboardClient from "./AdminDashboardClient";
 
 const AdminPage = async () => {
-  const user = await currentUser();
+  const { userId } = await auth();
 
-  if (!user) {
+  if (!userId) {
     redirect("/");
   }
+
+  // Get user from Clerk
+  const { clerkClient } = await import("@clerk/nextjs/server");
+  const client = await clerkClient();
+  const user = await client.users.getUser(userId);
 
   const email = user.emailAddresses?.[0]?.emailAddress;
 
