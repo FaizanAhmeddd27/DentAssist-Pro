@@ -23,10 +23,10 @@ export default function Navbar() {
   const { theme, cycleTheme } = useTheme();
 
   const navLinks = [
-    { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-    { name: "Appointments", href: "/admin/appointments", icon: Calendar },
-    { name: "Voice", href: "/admin/voice", icon: Mic },
-    { name: "Pro", href: "/admin/pro", icon: Crown },
+    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    { name: "Appointment", href: "/appointment", icon: Calendar },
+    { name: "Voice", href: "/voice", icon: Mic },
+    { name: "Pro", href: "/pro", icon: Crown },
   ];
 
   const isActive = (href: string) => pathname === href;
