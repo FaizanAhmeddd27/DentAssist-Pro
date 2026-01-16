@@ -4,9 +4,9 @@ import "./globals.css";
 
 import { ClerkProvider } from "@clerk/nextjs";
 import TanstackProvider from "@/providers/TanstackProvider";
-import UserSync from "@/components/UserSync";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { Toaster } from "react-hot-toast";
+import UserSync from "@/components/UserSync"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

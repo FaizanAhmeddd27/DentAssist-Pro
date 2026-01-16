@@ -1,4 +1,3 @@
-
 {
   "compilerOptions": {
     "target": "ES2017",
@@ -14,14 +13,16 @@
     "isolatedModules": true,
     "jsx": "react-jsx",
     "incremental": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
+    
+    // ✅ Important for aliasing
+    "baseUrl": "src",
     "paths": {
-      "@/*": ["./src/*"]
-    }
+      "@/*": ["*"]
+    },
+
+    "plugins": [
+      { "name": "next" }
+    ]
   },
   "include": [
     "next-env.d.ts",
@@ -29,7 +30,8 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
-    "**/*.mts"
-, "prisma.config.ts"  ],
+    "**/*.mts",
+    "prisma.config.ts"
+  ],
   "exclude": ["node_modules"]
 }
