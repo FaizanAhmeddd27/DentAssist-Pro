@@ -61,7 +61,9 @@ function CTA() {
                       size="lg"
                       className="px-8 py-6 text-base bg-gradient-to-r from-primary to-primary/90 hover:from-primary/95 hover:to-primary/85 shadow-xl hover:shadow-2xl transition-all duration-300 group"
                     >
-                      <MessageSquare className="mr-2 w-5 h-5" />
+                       <MessageSquare className="mr-2 w-5 h-5" />
+
+                     
                       Start Free Chat
                       <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
                     </Button>

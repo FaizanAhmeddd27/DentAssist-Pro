@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Sparkles, Brain, Shield, Zap, ArrowRight, CheckCircle2 } from "lucide-react";
+import Link from "next/link";
 
 const Hero: React.FC = () => {
   const features = [
@@ -71,11 +72,13 @@ const Hero: React.FC = () => {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start">
+              <Link href="/dashboard">
+             
               <button className="group px-6 sm:px-8 py-3 sm:py-4 rounded-lg bg-primary text-primary-foreground font-semibold hover:bg-primary/90 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-2 text-sm sm:text-base">
                 Get Started
                 <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform duration-300" />
               </button>
-
+              </Link>
               <button className="px-6 sm:px-8 py-3 sm:py-4 rounded-lg bg-transparent border-2 border-border hover:border-primary hover:bg-primary/5 font-semibold hover:shadow-lg hover:-translate-y-1 transition-all duration-300 text-sm sm:text-base">
                 Personalized Tips
               </button>

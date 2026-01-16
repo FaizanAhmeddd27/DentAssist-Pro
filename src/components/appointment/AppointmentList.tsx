@@ -1,32 +1,47 @@
 // components/appointment/AppointmentsList.tsx
-import React from "react";
-import { getUserAppointments } from "@/lib/actions/appointments";
-import { Calendar } from "lucide-react";
+"use client";
+
+import React, { useMemo } from "react";
+import { useGetAppointments } from "@/hooks/use-appointment";
+import { Calendar, Loader2 } from "lucide-react";
 import AppointmentCard from "./ApointmentCard";
 
 interface AppointmentsListProps {
   filter: "upcoming" | "past" | "cancelled";
 }
 
-async function AppointmentsList({ filter }: AppointmentsListProps) {
-  const allAppointments = await getUserAppointments();
+function AppointmentsList({ filter }: AppointmentsListProps) {
+  const { data: allAppointments = [], isLoading } = useGetAppointments();
   
-  const now = new Date();
-  
-  const filteredAppointments = allAppointments.filter((apt) => {
-    const aptDate = new Date(apt.date);
+  const filteredAppointments = useMemo(() => {
+    const now = new Date();
     
-    if (filter === "upcoming") {
-      return (
-        (apt.status === "SCHEDULED" || apt.status === "CONFIRMED") &&
-        aptDate >= now
-      );
-    } else if (filter === "past") {
-      return apt.status === "COMPLETED" || aptDate < now;
-    } else {
-      return apt.status === "CANCELLED" || apt.status === "NO_SHOW";
-    }
-  });
+    return allAppointments.filter((apt: any) => {
+      const aptDate = new Date(apt.date);
+      
+      if (filter === "upcoming") {
+        return (
+          (apt.status === "SCHEDULED" || apt.status === "CONFIRMED") &&
+          aptDate >= now
+        );
+      } else if (filter === "past") {
+        return apt.status === "COMPLETED" || aptDate < now;
+      } else {
+        return apt.status === "CANCELLED" || apt.status === "NO_SHOW";
+      }
+    });
+  }, [allAppointments, filter]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12 sm:py-16">
+        <div className="text-center space-y-4">
+          <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto" />
+          <p className="text-muted-foreground">Loading appointments...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (filteredAppointments.length === 0) {
     return (
@@ -46,7 +61,7 @@ async function AppointmentsList({ filter }: AppointmentsListProps) {
 
   return (
     <div className="grid gap-4 sm:gap-6">
-      {filteredAppointments.map((appointment) => (
+      {filteredAppointments.map((appointment: any) => (
         <AppointmentCard key={appointment.id} appointment={appointment} />
       ))}
     </div>

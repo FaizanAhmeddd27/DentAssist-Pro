@@ -1,11 +1,10 @@
 // components/appointment/AppointmentCard.tsx
 "use client";
 
-import React, { useState, useTransition } from "react";
+import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, Clock, User, Stethoscope, MoreVertical, X, Check, Trash2 } from "lucide-react";
-import { format } from "date-fns";
 import Image from "next/image";
 import {
   DropdownMenu,
@@ -24,23 +23,41 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { updateAppointmentStatus, deleteAppointment } from "@/lib/actions/appointments";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { useUpdateAppointmentStatus, useDeleteAppointment } from "@/hooks/use-appointment"
 
 interface AppointmentCardProps {
   appointment: any;
 }
 
+// Format date manually
+const formatDate = (date: Date) => {
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  
+  const d = new Date(date);
+  const monthName = months[d.getMonth()];
+  const day = d.getDate();
+  const year = d.getFullYear();
+  const dayName = days[d.getDay()];
+  
+  return {
+    short: `${monthName} ${day}, ${year}`,
+    day: dayName
+  };
+};
+
 function AppointmentCard({ appointment }: AppointmentCardProps) {
-  const [isPending, startTransition] = useTransition();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
-  const router = useRouter();
+  
+  const updateStatus = useUpdateAppointmentStatus();
+  const deleteAppointment = useDeleteAppointment();
   
   const appointmentDate = new Date(appointment.date);
   const isUpcoming = appointmentDate >= new Date() && 
     (appointment.status === "SCHEDULED" || appointment.status === "CONFIRMED");
+
+  const formattedDate = formatDate(appointmentDate);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -60,48 +77,20 @@ function AppointmentCard({ appointment }: AppointmentCardProps) {
   };
 
   const handleConfirm = () => {
-    startTransition(async () => {
-      const toastId = toast.loading("Confirming appointment...");
-      try {
-        await updateAppointmentStatus(appointment.id, "CONFIRMED");
-        toast.success("Appointment confirmed successfully!", { id: toastId });
-        router.refresh();
-      } catch (error) {
-        toast.error("Failed to confirm appointment. Please try again.", { id: toastId });
-        console.error(error);
-      }
-    });
+    updateStatus.mutate({ id: appointment.id, status: "CONFIRMED" });
   };
 
   const handleCancel = () => {
-    startTransition(async () => {
-      const toastId = toast.loading("Cancelling appointment...");
-      try {
-        await updateAppointmentStatus(appointment.id, "CANCELLED");
-        toast.success("Appointment cancelled successfully", { id: toastId });
-        setShowCancelDialog(false);
-        router.refresh();
-      } catch (error) {
-        toast.error("Failed to cancel appointment. Please try again.", { id: toastId });
-        console.error(error);
-      }
-    });
+    updateStatus.mutate({ id: appointment.id, status: "CANCELLED" });
+    setShowCancelDialog(false);
   };
 
   const handleDelete = () => {
-    startTransition(async () => {
-      const toastId = toast.loading("Deleting appointment...");
-      try {
-        await deleteAppointment(appointment.id);
-        toast.success("Appointment deleted successfully", { id: toastId });
-        setShowDeleteDialog(false);
-        router.refresh();
-      } catch (error) {
-        toast.error("Failed to delete appointment. Please try again.", { id: toastId });
-        console.error(error);
-      }
-    });
+    deleteAppointment.mutate(appointment.id);
+    setShowDeleteDialog(false);
   };
+
+  const isPending = updateStatus.isPending || deleteAppointment.isPending;
 
   return (
     <>
@@ -191,8 +180,8 @@ function AppointmentCard({ appointment }: AppointmentCardProps) {
                     <Calendar className="w-4 h-4 text-primary" />
                   </div>
                   <div className="min-w-0">
-                    <p className="font-medium truncate">{format(appointmentDate, "MMM dd, yyyy")}</p>
-                    <p className="text-xs text-muted-foreground truncate">{format(appointmentDate, "EEEE")}</p>
+                    <p className="font-medium truncate">{formattedDate.short}</p>
+                    <p className="text-xs text-muted-foreground truncate">{formattedDate.day}</p>
                   </div>
                 </div>
 

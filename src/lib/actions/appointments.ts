@@ -2,10 +2,10 @@
 "use server";
 
 import { currentUser } from "@clerk/nextjs/server";
-import prisma from "../prisma";
-import { format } from "date-fns";
 import { revalidatePath } from "next/cache";
-
+import prisma from "../prisma";
+import { sendAppointmentConfirmation, sendAppointmentCancellation } from "../emails";
+import { format } from "date-fns";
 
 export async function getUserStats() {
   try {
@@ -149,26 +149,27 @@ export async function createAppointment(data: {
       throw new Error("You must be signed in to book an appointment");
     }
 
-    // Get DB user
     const dbUser = await prisma.user.findUnique({
       where: { clerkId: user.id },
     });
 
     if (!dbUser) {
-      throw new Error("User profile not found");
+      throw new Error("User profile not found. Please try signing in again.");
     }
 
-    // Check doctor
     const doctor = await prisma.doctor.findUnique({
       where: { id: data.doctorId },
     });
 
-    if (!doctor || !doctor.isActive) {
-      throw new Error("Doctor is not available");
+    if (!doctor) {
+      throw new Error("Doctor not found");
     }
 
-    // Check time conflict
-    const conflict = await prisma.appointment.findFirst({
+    if (!doctor.isActive) {
+      throw new Error("This doctor is currently not available for appointments");
+    }
+
+    const existingAppointment = await prisma.appointment.findFirst({
       where: {
         doctorId: data.doctorId,
         date: data.date,
@@ -179,18 +180,17 @@ export async function createAppointment(data: {
       },
     });
 
-    if (conflict) {
-      throw new Error("This time slot is already booked");
+    if (existingAppointment) {
+      throw new Error("This time slot is already booked. Please choose another time.");
     }
 
-    // Create appointment
     const appointment = await prisma.appointment.create({
       data: {
         userId: dbUser.id,
         doctorId: data.doctorId,
         date: data.date,
         time: data.time,
-        duration: data.duration ?? 30,
+        duration: data.duration || 30,
         reason: data.reason,
         notes: data.notes,
         status: "SCHEDULED",
@@ -200,19 +200,45 @@ export async function createAppointment(data: {
           select: {
             id: true,
             name: true,
-            specialty: true,
             imageUrl: true,
+            specialty: true,
           },
         },
       },
     });
+
+    console.log("✅ Appointment created:", appointment.id);
+
+    // Send confirmation email
+    const userEmail = user.emailAddresses[0]?.emailAddress;
+    
+    if (userEmail) {
+      try {
+        await sendAppointmentConfirmation({
+          to: userEmail,
+          userName: user.firstName || 'there',
+          doctorName: doctor.name,
+          doctorSpecialty: doctor.specialty,
+          appointmentDate: format(new Date(data.date), 'EEEE, MMMM d, yyyy'),
+          appointmentTime: data.time,
+          appointmentDuration: data.duration || 30,
+          reason: data.reason,
+          notes: data.notes,
+        });
+        
+        console.log('✅ Confirmation email sent');
+      } catch (emailError: any) {
+        console.error('⚠️ Email failed (non-critical):', emailError.message);
+        // Don't fail appointment creation if email fails
+      }
+    }
 
     revalidatePath("/appointment");
     revalidatePath("/dashboard");
 
     return appointment;
   } catch (error: any) {
-    console.error("❌ Create appointment error:", error);
+    console.error("❌ Error creating appointment:", error);
     throw new Error(error.message || "Failed to create appointment");
   }
 }
@@ -225,10 +251,9 @@ export async function updateAppointmentStatus(
     const user = await currentUser();
 
     if (!user) {
-      throw new Error("You must be signed in");
+      throw new Error("You must be signed in to update appointments");
     }
 
-    // Check ownership
     const appointment = await prisma.appointment.findFirst({
       where: {
         id: appointmentId,
@@ -236,16 +261,22 @@ export async function updateAppointmentStatus(
           clerkId: user.id,
         },
       },
+      include: {
+        doctor: true,
+      },
     });
 
     if (!appointment) {
-      throw new Error("Appointment not found or unauthorized");
+      throw new Error("Appointment not found or you don't have permission to modify it");
     }
 
-    // Update status
     const updatedAppointment = await prisma.appointment.update({
-      where: { id: appointmentId },
-      data: { status },
+      where: {
+        id: appointmentId,
+      },
+      data: {
+        status: status,
+      },
       include: {
         doctor: {
           select: {
@@ -256,16 +287,38 @@ export async function updateAppointmentStatus(
       },
     });
 
+    console.log(`✅ Appointment ${appointmentId} updated to ${status}`);
+
+    // Send cancellation email if cancelled
+    if (status === "CANCELLED") {
+      const userEmail = user.emailAddresses[0]?.emailAddress;
+      
+      if (userEmail) {
+        try {
+          await sendAppointmentCancellation({
+            to: userEmail,
+            userName: user.firstName || 'there',
+            doctorName: appointment.doctor.name,
+            appointmentDate: format(new Date(appointment.date), 'EEEE, MMMM d, yyyy'),
+            appointmentTime: appointment.time,
+          });
+          
+          console.log('✅ Cancellation email sent');
+        } catch (emailError: any) {
+          console.error('⚠️ Cancellation email failed (non-critical):', emailError.message);
+        }
+      }
+    }
+
     revalidatePath("/appointment");
     revalidatePath("/dashboard");
 
     return updatedAppointment;
   } catch (error: any) {
-    console.error("❌ Update appointment error:", error);
+    console.error("❌ Error updating appointment:", error);
     throw new Error(error.message || "Failed to update appointment");
   }
 }
-
 
 export async function deleteAppointment(appointmentId: string) {
   try {
@@ -294,7 +347,8 @@ export async function deleteAppointment(appointmentId: string) {
       },
     });
 
-    // Revalidate pages
+    console.log(`✅ Appointment ${appointmentId} deleted`);
+
     revalidatePath("/appointment");
     revalidatePath("/dashboard");
 
