@@ -6,8 +6,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import TanstackProvider from "@/providers/TanstackProvider";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { Toaster } from "react-hot-toast";
-import UserSync from "@/components/UserSync"
-
+import UserSync from "@/components/UserSync";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
